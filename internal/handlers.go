@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package sctfe
+package scti
 
 import (
 	"context"
@@ -241,6 +241,7 @@ func addChainInternal(ctx context.Context, opts *HandlerOptions, log *log, w htt
 	}
 	// Get the current time in the form used throughout RFC6962, namely milliseconds since Unix
 	// epoch, and use this throughout.
+	nanosPerMilli := int64(time.Millisecond / time.Nanosecond)
 	timeMillis := uint64(opts.TimeSource.Now().UnixNano() / nanosPerMilli)
 
 	entry, err := entryFromChain(chain, isPrecert, timeMillis)

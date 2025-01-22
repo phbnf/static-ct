@@ -76,7 +76,7 @@ func main() {
 	flag.Parse()
 	ctx := context.Background()
 
-	timeSource := sctfe.SystemTimeSource{}
+	timeSource := SystemTimeSource{}
 	signer, err := NewSecretManagerSigner(ctx, *signerPublicKeySecretName, *signerPrivateKeySecretName)
 	if err != nil {
 		klog.Exitf("Can't create secret manager signer: %v", err)
@@ -261,4 +261,12 @@ func (t *timestampFlag) Set(w string) error {
 	}
 	t.t = &tt
 	return nil
+}
+
+// SystemTimeSource provides the current system local time
+type SystemTimeSource struct{}
+
+// Now returns the true current local time.
+func (s SystemTimeSource) Now() time.Time {
+	return time.Now()
 }

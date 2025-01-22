@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package sctfe
+package scti
 
 import (
 	"bufio"
@@ -56,7 +56,7 @@ var origin = "example.com"
 
 // The deadline should be the above bumped by 500ms
 var fakeDeadlineTime = time.Date(2016, 7, 22, 11, 01, 13, 500*1000*1000, time.UTC)
-var fakeTimeSource = NewFixedTimeSource(fakeTime)
+var fakeTimeSource = newFixedTimeSource(fakeTime)
 
 var entrypaths = []string{origin + ct.AddChainPath, origin + ct.AddPreChainPath, origin + ct.GetRootsPath}
 
@@ -65,6 +65,20 @@ type handlerTestInfo struct {
 	roots    *x509util.PEMCertPool
 	storage  *mockstorage.MockStorage
 	handlers map[string]appHandler
+}
+
+type fixedTimeSource struct {
+	fakeTime time.Time
+}
+
+// newFixedTimeSource creates a fixedTimeSource instance
+func newFixedTimeSource(t time.Time) *fixedTimeSource {
+	return &fixedTimeSource{fakeTime: t}
+}
+
+// Now returns the time value this instance contains
+func (f *fixedTimeSource) Now() time.Time {
+	return f.fakeTime
 }
 
 // setupTest creates mock objects and contexts.  Caller should invoke info.mockCtrl.Finish().

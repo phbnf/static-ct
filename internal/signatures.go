@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package sctfe
+package scti
 
 import (
 	"crypto"
@@ -32,8 +32,8 @@ import (
 
 const nanosPerMilli int64 = int64(time.Millisecond / time.Nanosecond)
 
-// signSCT builds an SCT for a leaf.
-type signSCT func(leaf *ct.MerkleTreeLeaf) (*ct.SignedCertificateTimestamp, error)
+// SignSCT builds an SCT for a leaf.
+type SignSCT func(leaf *ct.MerkleTreeLeaf) (*ct.SignedCertificateTimestamp, error)
 
 // TODO(phboneff): create an SCTSigner object
 func buildV1SCT(signer crypto.Signer, leaf *ct.MerkleTreeLeaf) (*ct.SignedCertificateTimestamp, error) {
@@ -162,7 +162,7 @@ func (cts *cpSigner) KeyHash() uint32 {
 	return cts.keyHash
 }
 
-// newCpSigner returns a new note signer that can sign https://c2sp.org/static-ct-api checkpoints.
+// NewCpSigner returns a new note signer that can sign https://c2sp.org/static-ct-api checkpoints.
 // TODO(phboneff): add tests
 func newCpSigner(cs crypto.Signer, origin string, timeSource timeSource) (note.Signer, error) {
 	logID, err := getCTLogID(cs.Public())
