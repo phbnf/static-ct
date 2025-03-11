@@ -154,7 +154,7 @@ resource "google_cloudbuild_trigger" "build_trigger" {
 
         go run github.com/phbnf/certificate-transparency-go/trillian/integration/ct_hammer@barer\
            --ct_http_servers="$(cat /workspace/conformance_url)/arche2025h1.ct.transparency.dev" \
-	   --bearer_token="$(cat /workspace/cb_identity)
+	   --bearer_token="$(cat /workspace/cb_identity)"
            --max_retry=2m \
            --invalid_chance=0 \
            --get_sth=0 \
