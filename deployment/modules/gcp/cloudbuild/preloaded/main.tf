@@ -134,10 +134,38 @@ resource "google_cloudbuild_trigger" "build_trigger" {
       script   = <<EOT
         apt update && apt install -y retry
 	apt-get install -y wget
+        gcloud auth print-access-token > /workspace/cb_access
         curl -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/${local.cloudbuild_service_account}/identity?audience=$(cat /workspace/conformance_url)" > /workspace/cb_identity
 
       EOT
       wait_for = ["terraform_apply_conformance_staging"]
+    }
+
+    ## Test against the conformance server with CT Hammer.
+    step {
+      id       = "ct_hammer1"
+      name     = "golang"
+      script   = <<EOT
+        apt update && apt install -y retry
+
+        openssl ec -pubin -inform PEM -in /workspace/conformance_log_public_key.pem -outform der -out /workspace/conformance_log_public_key.der
+        base64 -w 0 /workspace/conformance_log_public_key.der > /workspace/conformance_log_public_key
+
+        retry -t 5 -d 15 --until=success go run ./internal/hammer \
+          --origin="ci-static-ct" \
+          --log_public_key="$(cat /workspace/conformance_log_public_key)" \
+          --log_url="https://storage.googleapis.com/$(cat /workspace/conformance_bucket_name)/" \
+          --write_log_url="$(cat /workspace/conformance_url)/arche2025h1.ct.transparency.dev" \
+          -v=1 \
+          --show_ui=false \
+          --bearer_token="$(cat /workspace/cb_access)" \
+          --bearer_token_write="$(cat /workspace/cb_identity)" \
+          --logtostderr \
+          --num_writers=256 \
+          --max_write_ops=256 \
+          --leaf_write_goal=10
+      EOT
+      wait_for = ["bearer_token"]
     }
 
     ## TODO(phboneff): move to its own container.
