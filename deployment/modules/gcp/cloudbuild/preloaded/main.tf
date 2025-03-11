@@ -132,8 +132,11 @@ resource "google_cloudbuild_trigger" "build_trigger" {
       id       = "bearer_token"
       name     = "gcr.io/cloud-builders/gcloud"
       script   = <<EOT
+        apt update && apt install -y retry
+	apt-get install -y wget
         curl -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/${local.cloudbuild_service_account}/identity?audience=$(cat /workspace/conformance_url)" > /workspace/cb_identity
 
+	curl -v -H "Authorization: Bearer $(cat /workspace/cb_identity)" "http://$(cat /workspace/conformance_url)/arche2025h1.ct.transparency.dev/ct/v1/get-roots"
 	wget -d --header "Authorization: Bearer $(cat /workspace/cb_identity)" "http://$(cat /workspace/conformance_url)/arche2025h1.ct.transparency.dev/ct/v1/get-roots"
 	
       EOT
@@ -152,8 +155,9 @@ resource "google_cloudbuild_trigger" "build_trigger" {
         sed -i 's-""-"/workspace/arche2025h1_roots.pem"-g' /workspace/hammer.cfg
 
 
-        go run github.com/google/certificate-transparency-go/trillian/integration/ct_hammer@master \
+        go run github.com/phbnf/certificate-transparency-go/trillian/integration/ct_hammer@barer\
            --ct_http_servers="$(cat /workspace/conformance_url)/arche2025h1.ct.transparency.dev" \
+	   --bearer_token="$(cat /workspace/cb_identity)
            --max_retry=2m \
            --invalid_chance=0 \
            --get_sth=0 \
