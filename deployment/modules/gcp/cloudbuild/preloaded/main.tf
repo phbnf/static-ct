@@ -152,7 +152,7 @@ resource "google_cloudbuild_trigger" "build_trigger" {
         sed -i 's-""-"/workspace/arche2025h1_roots.pem"-g' /workspace/hammer.cfg
 
 
-        go run github.com/phbnf/certificate-transparency-go/trillian/integration/ct_hammer@barer\
+        go run github.com/phbnf/certificate-transparency-go/trillian/integration/ct_hammer@bearer\
            --ct_http_servers="$(cat /workspace/conformance_url)/arche2025h1.ct.transparency.dev" \
 	   --bearer_token="$(cat /workspace/cb_identity)"
            --max_retry=2m \
