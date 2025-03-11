@@ -135,7 +135,7 @@ resource "google_cloudbuild_trigger" "build_trigger" {
 
 
         go run github.com/google/certificate-transparency-go/trillian/integration/ct_hammer@master \
-           --ct_http_servers="$(cat /workspace/arche2025h1_url)/arche2025h1.ct.transparency.dev" \
+           --ct_http_servers="$(cat /workspace/conformance_url)/arche2025h1.ct.transparency.dev" \
            --max_retry=2m \
            --invalid_chance=0 \
            --get_sth=0 \
