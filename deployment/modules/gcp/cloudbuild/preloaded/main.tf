@@ -136,9 +136,6 @@ resource "google_cloudbuild_trigger" "build_trigger" {
 	apt-get install -y wget
         curl -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/${local.cloudbuild_service_account}/identity?audience=$(cat /workspace/conformance_url)" > /workspace/cb_identity
 
-	curl -v -H "Authorization: Bearer $(cat /workspace/cb_identity)" "http://$(cat /workspace/conformance_url)/arche2025h1.ct.transparency.dev/ct/v1/get-roots"
-	wget -d --header "Authorization: Bearer $(cat /workspace/cb_identity)" "http://$(cat /workspace/conformance_url)/arche2025h1.ct.transparency.dev/ct/v1/get-roots"
-	
       EOT
       wait_for = ["terraform_apply_conformance_staging"]
     }
