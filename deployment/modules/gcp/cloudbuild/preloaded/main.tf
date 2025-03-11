@@ -168,40 +168,6 @@ resource "google_cloudbuild_trigger" "build_trigger" {
       wait_for = ["bearer_token"]
     }
 
-    ## TODO(phboneff): move to its own container.
-    ## Test against the conformance server with CT Hammer.
-    step {
-      id       = "ct_hammer"
-      name     = "golang"
-      script   = <<EOT
-        apt update && apt install -y retry
-        cp internal/testdata/hammer.cfg /workspace/hammer.cfg
-	cp deployment/live/gcp/static-ct-staging/logs/arche2025h1/roots.pem /workspace/arche2025h1_roots.pem
-        sed -i 's-""-"/workspace/arche2025h1_roots.pem"-g' /workspace/hammer.cfg
-
-
-        go run github.com/phbnf/certificate-transparency-go/trillian/integration/ct_hammer@bearer\
-           --ct_http_servers="$(cat /workspace/conformance_url)/arche2025h1.ct.transparency.dev" \
-	   --bearer_token="$(cat /workspace/cb_identity)"
-           --max_retry=2m \
-           --invalid_chance=0 \
-           --get_sth=0 \
-           --get_sth_consistency=0 \
-           --get_proof_by_hash=0 \
-           --get_entries=0 \
-           --get_roots=0 \
-           --get_entry_and_proof=0 \
-           --max_parallel_chains=4 \
-           --skip_https_verify=true \
-           --operations=100 \
-           --rate_limit=150 \
-           --log_config=/workspace/hammer.cfg \
-           --src_log_uri=https://ct.googleapis.com/logs/us1/argon2025h1
-
-      EOT
-      wait_for = ["bearer_token"]
-    }
-
     options {
       logging      = "CLOUD_LOGGING_ONLY"
       machine_type = "E2_HIGHCPU_8"
