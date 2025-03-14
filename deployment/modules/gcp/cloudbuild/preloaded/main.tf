@@ -142,10 +142,10 @@ resource "google_cloudbuild_trigger" "build_trigger" {
       name     = "golang"
       script   = <<EOT
         apt update && apt install -y retry
-        cp internal/testdata/hammer.cfg /workspace/hammer.cfg
-	cp deployment/live/gcp/static-ct-staging/logs/arche2025h1/roots.pem /workspace/arche2025h1_roots.pem
-        sed -i 's-""-"/workspace/arche2025h1_roots.pem"-g' /workspace/hammer.cfg
 
+        openssl ec -pubin -inform PEM -in /workspace/conformance_log_public_key.pem -outform der -out | hexdump -v -e '"\\\x" 1/1 "%02x"' > /workspace/conformance_log_public_key.der
+	printf 'config {\n  root_pem_file: "%s"\n  public_key: {\n    der: "%s"\n  }\n}\n' "/workspace/arche2025h1_roots.pem" "$(cat /workspace/conformance_log_public_key.der)" > /workspace/hammer.cfg
+	cat /workspace/hammer.cfg
 
         go run github.com/google/certificate-transparency-go/trillian/integration/ct_hammer@master \
            --ct_http_servers="$(cat /workspace/conformance_url)/arche2025h1.ct.transparency.dev" \
