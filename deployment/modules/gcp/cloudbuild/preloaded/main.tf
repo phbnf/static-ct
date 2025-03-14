@@ -152,7 +152,7 @@ resource "google_cloudbuild_trigger" "build_trigger" {
         base64 -w 0 /workspace/conformance_log_public_key.der > /workspace/conformance_log_public_key
 
         retry -t 5 -d 15 --until=success go run ./internal/hammer \
-          --origin="ci-static-ct" \
+          --origin="arche2025h1.ct.transparency.dev" \
           --log_public_key="$(cat /workspace/conformance_log_public_key)" \
           --log_url="https://storage.googleapis.com/$(cat /workspace/conformance_bucket_name)/" \
           --write_log_url="$(cat /workspace/conformance_url)/arche2025h1.ct.transparency.dev" \
