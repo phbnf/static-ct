@@ -129,8 +129,8 @@ resource "google_cloudbuild_trigger" "build_trigger" {
       id       = "bearer_token"
       name     = "gcr.io/cloud-builders/gcloud"
       script   = <<EOT
+        gcloud auth print-access-token > /workspace/cb_access
         curl -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/${local.cloudbuild_service_account}/identity?audience=$(cat /workspace/conformance_url)" > /workspace/cb_identity
-	
       EOT
       wait_for = ["terraform_apply_conformance_staging"]
     }
@@ -141,10 +141,14 @@ resource "google_cloudbuild_trigger" "build_trigger" {
       id       = "ct_preloader"
       name     = "golang"
       script   = <<EOT
+	TARGET_URL="$(cat /workspace/conformance_url)/arche2025h1.ct.transparency.dev"
+	START_INDEX=$(curl -H "Authorization: Bearer $(cat /workspace/cb_access)" $TARGET_URL/checkpoint | head -2
+	echo "Will start preloader at index $START_INDEX"
         go run github.com/google/certificate-transparency-go/preload/preloader@master \
-          --target_log_uri="$(cat /workspace/conformance_url)/arche2025h1.ct.transparency.dev" \
+          --target_log_uri=$TARGET_URL \
 	  --target_bearer_token="$(cat /workspace/cb_identity)" \
           --source_log_uri=https://ct.googleapis.com/logs/us1/argon2025h1
+	  --start_index=$START_INDEX
       EOT
       wait_for = ["bearer_token"]
     }
