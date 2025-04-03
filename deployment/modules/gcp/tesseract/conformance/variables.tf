@@ -32,3 +32,8 @@ variable "server_docker_image" {
   description = "The full image URL (path & tag) for the Docker image to deploy in Cloud Run"
   type        = string
 }
+
+variable "preloader_docker_image" {
+  description = "The full image URL (path & tag) for the preloader Docker image to deploy in Cloud Run"
+  type        = string
+}
