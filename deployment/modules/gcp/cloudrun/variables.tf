@@ -57,3 +57,13 @@ variable "signer_private_key_secret_name" {
   description = "Private key secret name for checkpoints and SCTs signer. Format: projects/{projectId}/secrets/{secretName}/versions/{secretVersion}."
   type        = string
 }
+
+variable "preloader_docker_image" {
+  description = "The full image URL (path & tag) for the preloader Docker image to deploy in Cloud Run"
+  type        = string
+}
+
+variable "preloader_start_index" {
+  description = "Index to start the preloader at"
+  type        = string
+}

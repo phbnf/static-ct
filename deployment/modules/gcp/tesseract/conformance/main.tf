@@ -26,6 +26,8 @@ module "cloudrun" {
   origin_suffix                  = var.origin_suffix
   location                       = var.location
   server_docker_image            = var.server_docker_image
+  preloader_docker_image         = var.preloader_docker_image
+  preloader_start_index          = var.preloader_start_index
   bucket                         = module.storage.log_bucket.id
   log_spanner_instance           = module.storage.log_spanner_instance.name
   log_spanner_db                 = module.storage.log_spanner_db.name
