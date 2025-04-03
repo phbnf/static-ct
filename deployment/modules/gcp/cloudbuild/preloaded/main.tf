@@ -25,6 +25,7 @@ locals {
   scheduler_service_account    = "scheduler-${var.env}-sa@${var.project_id}.iam.gserviceaccount.com"
   artifact_repo                = "${var.location}-docker.pkg.dev/${var.project_id}/${module.artifactregistry.docker.name}"
   conformance_gcp_docker_image = "${local.artifact_repo}/conformance-gcp"
+  preloader_gcp_docker_image   = "${local.artifact_repo}/preloader"
 }
 
 resource "google_project_service" "cloudbuild_api" {
@@ -102,117 +103,31 @@ resource "google_cloudbuild_trigger" "build_trigger" {
       wait_for = ["docker_build_conformance_gcp"]
     }
 
-    ## Apply the deployment/live/gcp/static-staging/logs/arche2025h1 terragrunt config.
-    ## This will bring up or update the conformance infrastructure, including a service
-    ## running the conformance server docker image built above.
+    ## Build the preloader Docker image.
     step {
-      id     = "terraform_apply_conformance_staging"
-      name   = "alpine/terragrunt"
-      script = <<EOT
-        terragrunt --terragrunt-non-interactive --terragrunt-no-color apply -auto-approve -no-color 2>&1
-        terragrunt --terragrunt-no-color output --raw conformance_url -no-color > /workspace/conformance_url
-        terragrunt --terragrunt-no-color output --raw conformance_bucket_name -no-color > /workspace/conformance_bucket_name
-        terragrunt --terragrunt-no-color output --raw ecdsa_p256_public_key_data -no-color > /workspace/conformance_log_public_key.pem
-      EOT
-      dir    = "deployment/live/gcp/static-ct-staging/logs/arche2025h1"
-      env = [
-        "GOOGLE_PROJECT=${var.project_id}",
-        "TF_IN_AUTOMATION=1",
-        "TF_INPUT=false",
-        "TF_VAR_project_id=${var.project_id}",
-        "DOCKER_CONTAINER_TAG=$SHORT_SHA"
-      ]
-      wait_for = ["docker_push_conformance_gcp"]
-    }
-
-    ## Apply the deployment/live/gcp/static-staging/cloudbuild/preloader terragrunt config.
-    ## This will bring up the preloader agaist the conformance infrastructure.
-    step {
-      id     = "terraform_apply_preloader"
-      name   = "alpine/terragrunt"
-      script = <<EOT
-        export SUBMISSION_URL=$(cat /workspace/conformance_url)/arche2025h1.ct.transparency.dev
-        terragrunt --terragrunt-non-interactive --terragrunt-no-color apply -auto-approve -no-color 2>&1
-      EOT
-      dir    = "deployment/live/gcp/static-ct-staging/cloudbuild/preloader"
-      env = [
-        "TF_IN_AUTOMATION=1",
-        "TF_INPUT=false",
-        "TF_VAR_project_id=${var.project_id}",
-        "TF_VAR_location=${var.location}",
-        "TF_VAR_env=${var.env}",
-        "TF_VAR_github_owner=${var.github_owner}",
-      ]
-      wait_for = ["docker_push_conformance_gcp"]
-    }
-
-    options {
-      logging      = "CLOUD_LOGGING_ONLY"
-      machine_type = "E2_HIGHCPU_8"
-    }
-  }
-
-  depends_on = [
-    module.artifactregistry
-  ]
-}
-
-resource "google_cloudbuild_trigger" "preloader_trigger" {
-  name            = "build-docker-${var.docker_env}"
-  service_account = "projects/${var.project_id}/serviceAccounts/${local.cloudbuild_service_account}"
-  location        = var.location
-
-  # TODO(phboneff): use a better mechanism to trigger releases that re-uses Docker containters, or based on branches rather.
-  # This is a temporary mechanism to speed up development.
-  github {
-    owner = var.github_owner
-    name  = "static-ct"
-    push {
-      tag = "^staging-deploy-(.+)$"
-    }
-  }
-
-  build {
-    ## Build the SCTFE GCP Docker image.
-    ## This will be used by the building the conformance Docker image which includes 
-    ## the test data.
-    step {
-      id   = "docker_build_sctfe_gcp"
+      id   = "docker_build_preloader"
       name = "gcr.io/cloud-builders/docker"
       args = [
         "build",
-        "-t", "sctfe-gcp:$SHORT_SHA",
-        "-t", "sctfe-gcp:latest",
-        "-f", "./cmd/gcp/Dockerfile",
+        "-t", "${local.preloader_gcp_docker_image}:$SHORT_SHA",
+        "-t", "${local.preloader_gcp_docker_image}:latest",
+        "-f", "./deployment/modules/gcp/cloudbuild/preloader/Dockerfile",
         "."
       ]
     }
 
-    ## Build the SCTFE GCP Conformance Docker container image.
+    ## Push the preloader Docker container image to Artifact Registry.
     step {
-      id   = "docker_build_conformance_gcp"
-      name = "gcr.io/cloud-builders/docker"
-      args = [
-        "build",
-        "-t", "${local.conformance_gcp_docker_image}:$SHORT_SHA",
-        "-t", "${local.conformance_gcp_docker_image}:latest",
-        "-f", "./cmd/gcp/staging/Dockerfile",
-        "."
-      ]
-      wait_for = ["docker_build_sctfe_gcp"]
-    }
-
-    ## Push the conformance Docker container image to Artifact Registry.
-    step {
-      id   = "docker_push_conformance_gcp"
+      id   = "docker_push_preloader_gcp"
       name = "gcr.io/cloud-builders/docker"
       args = [
         "push",
         "--all-tags",
-        local.conformance_gcp_docker_image
+        local.preloader_gcp_docker_image
       ]
-      wait_for = ["docker_build_conformance_gcp"]
+      wait_for = ["docker_build_preloader"]
     }
+
 
     ## Apply the deployment/live/gcp/static-staging/logs/arche2025h1 terragrunt config.
     ## This will bring up or update the conformance infrastructure, including a service
@@ -233,27 +148,6 @@ resource "google_cloudbuild_trigger" "preloader_trigger" {
         "TF_INPUT=false",
         "TF_VAR_project_id=${var.project_id}",
         "DOCKER_CONTAINER_TAG=$SHORT_SHA"
-      ]
-      wait_for = ["docker_push_conformance_gcp"]
-    }
-
-    ## Apply the deployment/live/gcp/static-staging/cloudbuild/preloader terragrunt config.
-    ## This will bring up the preloader agaist the conformance infrastructure.
-    step {
-      id     = "terraform_apply_preloader"
-      name   = "alpine/terragrunt"
-      script = <<EOT
-        export SUBMISSION_URL=$(cat /workspace/conformance_url)/arche2025h1.ct.transparency.dev
-        terragrunt --terragrunt-non-interactive --terragrunt-no-color apply -auto-approve -no-color 2>&1
-      EOT
-      dir    = "deployment/live/gcp/static-ct-staging/cloudbuild/preloader"
-      env = [
-        "TF_IN_AUTOMATION=1",
-        "TF_INPUT=false",
-        "TF_VAR_project_id=${var.project_id}",
-        "TF_VAR_location=${var.location}",
-        "TF_VAR_env=${var.env}",
-        "TF_VAR_github_owner=${var.github_owner}",
       ]
       wait_for = ["docker_push_conformance_gcp"]
     }
