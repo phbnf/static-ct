@@ -71,6 +71,42 @@ resource "google_cloud_run_v2_service" "default" {
         }
       }
     }
+
+    containers {
+      image = var.preloader_docker_image
+      name  = "preloader"
+      args = [
+         "--target_log_uri=localhost:6962/arche2025h1.ct.transparency.dev",
+         "--source_log_uri=https://ct.googleapis.com/logs/us1/argon2025h1",
+	       "--start_index=$START_INDEX",
+         "--num_workers=20",
+         "--parallel_fetch=20",
+         "--parallel_submit=20",
+        "--logtostderr",
+      ]
+      ports {
+        container_port = 6963
+      }
+
+      resources {
+        limits = {
+          cpu    = "2000m"
+          memory = "1Gi"
+        }
+      }
+
+      startup_probe {
+        initial_delay_seconds = 1
+        timeout_seconds       = 1
+        period_seconds        = 10
+        failure_threshold     = 6
+        tcp_socket {
+          port = 6963
+        }
+      }
+      depends_on = ["conformance"]
+    }
+
     containers {
       image      = "us-docker.pkg.dev/cloud-ops-agents-artifacts/cloud-run-gmp-sidecar/cloud-run-gmp-sidecar:1.2.0"
       name       = "collector"
