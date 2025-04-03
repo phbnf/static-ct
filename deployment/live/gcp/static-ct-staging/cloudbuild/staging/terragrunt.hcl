@@ -1,13 +1,29 @@
+terraform {
+  source = "${get_repo_root()}/deployment/modules/gcp//cloudbuild/preloaded"
+}
+
 locals {
-  docker_env = include.root.locals.env
+  env            = "staging"
+  docker_env     = "staging"
+  project_id     = get_env("GOOGLE_PROJECT", "static-ct-staging")
+  location       = get_env("GOOGLE_REGION", "us-central1")
+  github_owner   = get_env("GITHUB_OWNER", "transparency-dev")
 }
 
-include "root" {
-  path   = find_in_parent_folders()
-  expose = true
-}
+inputs = local
 
-inputs = merge(
-  local,
-  include.root.locals,
-)
+remote_state {
+  backend = "gcs"
+
+  config = {
+    project  = local.project_id
+    location = local.location
+    bucket   = "${local.project_id}-cloudbuild-terraform-state"
+    prefix   = "terraform.tfstate"
+
+    gcs_bucket_labels = {
+      name = "terraform_state"
+      env  = "${local.env}"
+    }
+  }
+}
