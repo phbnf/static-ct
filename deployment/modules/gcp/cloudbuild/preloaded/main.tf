@@ -131,7 +131,7 @@ resource "google_cloudbuild_trigger" "build_trigger" {
       id     = "terraform_apply_preloader"
       name   = "alpine/terragrunt"
       script = <<EOT
-        terragrunt --terragrunt-non-interactive --terragrunt-no-color apply -auto-approve -no-color -var="submission_url=$(cat /workspace/conformance_url)/arche2025h.ct.transparency.dev" -var="monitoring_url=$(cat /workspace/conformance_bucket_name)" 2>&1
+        terragrunt --terragrunt-non-interactive --terragrunt-no-color apply -auto-approve -no-color -var="submission_url=$(cat /workspace/conformance_url)/arche2025h1.ct.transparency.dev/" -var="monitoring_url=$(cat /workspace/conformance_bucket_name)" 2>&1
       EOT
       dir    = "deployment/live/gcp/static-ct-staging/cloudbuild/preloader"
       env = [

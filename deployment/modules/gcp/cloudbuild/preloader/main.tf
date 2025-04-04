@@ -71,12 +71,14 @@ resource "google_cloudbuild_trigger" "preloader_trigger" {
       name     = "golang"
       script   = <<EOT
 	      START_INDEX=$(curl -H "Authorization: Bearer $(cat /workspace/cb_access)" https://storage.googleapis.com/${var.monitoring_url}/checkpoint | head -2 | tail -1)
-	      echo "Will start preloader at index $START_INDEX"
-        go run github.com/google/certificate-transparency-go/preload/preloader@master \
+	      END_INDEX=$(($START_INDEX+400))
+	      echo "Will run preloader between $START_INDEX and $END_INDEX"
+        go run github.com/phbnf/certificate-transparency-go/preload/preloader@endindex \
           --target_log_uri=${var.submission_url}/ \
 	        --target_bearer_token="$(cat /workspace/cb_identity)" \
           --source_log_uri=https://ct.googleapis.com/logs/us1/argon2025h1 \
 	        --start_index=$START_INDEX \
+	        --end_index=$END_INDEX \
           --num_workers=20 \
           --parallel_fetch=20 \
           --parallel_submit=20
