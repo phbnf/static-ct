@@ -72,26 +72,31 @@ resource "google_cloud_run_v2_service" "default" {
       }
     }
 
-    containers {
-      image = var.preloader_docker_image
-      name  = "preloader"
-      args = [
-         "--target_log_uri=http://localhost:6962/arche2025h1.ct.transparency.dev",
-         "--source_log_uri=https://ct.googleapis.com/logs/us1/argon2025h1",
-	       "--start_index=${var.preloader_start_index}",
-         "--num_workers=20",
-         "--parallel_fetch=20",
-         "--parallel_submit=20",
-      ]
+    # Only start the preloader if both a container and a start index are provided.
+    dynamic containers {
+      for_each = var.preloader_start_index != "" ? [var.preloader_docker_image] : []
 
-      resources {
-        limits = {
-          cpu    = "2000m"
-          memory = "1Gi"
+      content {
+        image = var.preloader_docker_image
+        name  = "preloader"
+        args = [
+           "--target_log_uri=http://localhost:6962/arche2025h1.ct.transparency.dev",
+           "--source_log_uri=https://ct.googleapis.com/logs/us1/argon2025h1",
+	         "--start_index=${var.preloader_start_index}",
+           "--num_workers=20",
+           "--parallel_fetch=20",
+           "--parallel_submit=20",
+        ]
+
+        resources {
+          limits = {
+            cpu    = "2000m"
+            memory = "1Gi"
+          }
         }
-      }
 
-      depends_on = ["conformance"]
+        depends_on = ["conformance"]
+      }
     }
 
     containers {
