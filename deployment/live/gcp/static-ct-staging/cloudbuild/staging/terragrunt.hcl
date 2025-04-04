@@ -5,6 +5,7 @@ terraform {
 locals {
   env            = "staging"
   docker_env     = "staging"
+  source_log_uri = "https://ct.googleapis.com/logs/us1/argon2025h1"
   project_id     = get_env("GOOGLE_PROJECT", "static-ct-staging")
   location       = get_env("GOOGLE_REGION", "us-central1")
   github_owner   = get_env("GITHUB_OWNER", "transparency-dev")
