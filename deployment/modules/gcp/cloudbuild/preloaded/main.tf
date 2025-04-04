@@ -146,7 +146,7 @@ resource "google_cloudbuild_trigger" "build_trigger" {
       id       = "ct_preloader"
       name     = "golang"
       script   = <<EOT
-	      curl -H "Authorization: Bearer $(cat /workspace/cb_access)" https://storage.googleapis.com/$(cat /workspace/conformance_bucket_name)/checkpoint | head -2 | tail -1 > /workspace/start_index
+	      curl -H "Authorization: Bearer $(cat /workspace/cb_access)" https://storage.googleapis.com/$(cat /workspace/conformance_bucket_name)/checkpoint | head -2 | tail -1 > /workspace/preloader_start_index
         EOT
     }
 
@@ -168,7 +168,6 @@ resource "google_cloudbuild_trigger" "build_trigger" {
         "TF_IN_AUTOMATION=1",
         "TF_INPUT=false",
         "TF_VAR_project_id=${var.project_id}",
-        "TF_VAR_preloader_start_index=$START_INDEX",
         "DOCKER_CONTAINER_TAG=$SHORT_SHA"
       ]
       wait_for = ["docker_push_conformance_gcp"]
