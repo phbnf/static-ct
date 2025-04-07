@@ -17,3 +17,9 @@ variable "ephemeral" {
   description = "Set to true if this is a throwaway/temporary log instance. Will set attributes on created resources to allow them to be disabled/deleted more easily."
   type = bool
 }
+
+variable "spanner_pu" {
+  description = "Amount of processing units for Spanner"
+  type = number
+  default = 100
+}
