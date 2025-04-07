@@ -32,3 +32,9 @@ variable "server_docker_image" {
   description = "The full image URL (path & tag) for the Docker image to deploy in Cloud Run"
   type        = string
 }
+
+variable "spanner_pu" {
+  description = "Amount of processing units for Spanner"
+  type = number
+  default = 100
+}
