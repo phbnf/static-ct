@@ -64,12 +64,12 @@ resource "google_cloudbuild_trigger" "build_trigger" {
     ## This will be used by the building the conformance Docker image which includes 
     ## the test data.
     step {
-      id   = "docker_build_sctfe_gcp"
+      id   = "docker_build_tesseract_gcp"
       name = "gcr.io/cloud-builders/docker"
       args = [
         "build",
-        "-t", "sctfe-gcp:$SHORT_SHA",
-        "-t", "sctfe-gcp:latest",
+        "-t", "tesseract-gcp:$SHORT_SHA",
+        "-t", "tesseract-gcp:latest",
         "-f", "./cmd/gcp/Dockerfile",
         "."
       ]
@@ -86,7 +86,7 @@ resource "google_cloudbuild_trigger" "build_trigger" {
         "-f", "./cmd/gcp/staging/Dockerfile",
         "."
       ]
-      wait_for = ["docker_build_sctfe_gcp"]
+      wait_for = ["docker_build_tesseract_gcp"]
     }
 
     ## Push the conformance Docker container image to Artifact Registry.
