@@ -65,14 +65,14 @@ resource "google_cloudbuild_trigger" "preloader_trigger" {
     ## TODO(phboneff): move to its own container / cloudrun / batch job.
     ## Preload entries.
     ## Leave enough time for the preloader to run, until the token expires.
-    ## Stop after 40k entries, this is what gets copied within 60 minutes.
+    ## Stop after 20k entries, this is what gets copied within 60 minutes.
     timeout = "4200s" // 60 minutes
     step {
       id       = "ct_preloader"
       name     = "golang"
       script   = <<EOT
 	      START_INDEX=$(curl -H "Authorization: Bearer $(cat /workspace/cb_access)" ${var.monitoring_url}/checkpoint | head -2 | tail -1)
-	      END_INDEX=$(($START_INDEX+400000))
+	      END_INDEX=$(($START_INDEX+2000000))
 	      echo "Will run preloader between $START_INDEX and $END_INDEX"
         go run github.com/google/certificate-transparency-go/preload/preloader@master \
           --target_log_uri=${var.submission_url}/ \
@@ -80,9 +80,9 @@ resource "google_cloudbuild_trigger" "preloader_trigger" {
           --source_log_uri=${var.source_log_uri} \
 	        --start_index=$START_INDEX \
 	        --end_index=$END_INDEX \
-          --num_workers=20 \
-          --parallel_fetch=20 \
-          --parallel_submit=20
+          --num_workers=300 \
+          --parallel_fetch=300 \
+          --parallel_submit=300
       EOT
       wait_for = ["bearer_token"]
       timeout = "3600s" // 60 minutes, duration of token validity.
