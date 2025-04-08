@@ -75,7 +75,7 @@ resource "google_cloudbuild_trigger" "build_trigger" {
       ]
     }
 
-    ## Build the SCTFE GCP Docker image.
+    ## Build TesseraCT GCP Docker image.
     ## This will be used by the building the conformance Docker image which includes 
     ## the test data.
     step {
@@ -90,7 +90,7 @@ resource "google_cloudbuild_trigger" "build_trigger" {
       ]
     }
 
-    ## Build the SCTFE GCP Conformance Docker container image.
+    ## Build TesseraCT GCP Conformance Docker container image.
     step {
       id   = "docker_build_conformance_gcp"
       name = "gcr.io/cloud-builders/docker"
