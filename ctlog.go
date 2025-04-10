@@ -138,7 +138,7 @@ func NewLogHandler(ctx context.Context, origin string, signer crypto.Signer, cfg
 		TimeSource:         sysTimeSource,
 	}
 
-	handlers := scti.NewPathHandlers(ctx, opts, log)
+	handlers := scti.NewPathHandlers(opts, log)
 	mux := http.NewServeMux()
 	// Register handlers for all the configured logs.
 	for path, handler := range handlers {
