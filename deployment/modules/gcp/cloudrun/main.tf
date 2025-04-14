@@ -49,6 +49,7 @@ resource "google_cloud_run_v2_service" "default" {
         "--origin=${var.base_name}${var.origin_suffix}",
         "--signer_public_key_secret_name=${var.signer_public_key_secret_name}",
         "--signer_private_key_secret_name=${var.signer_private_key_secret_name}",
+        "--antispam=true",
       ]
       ports {
         container_port = 6962
