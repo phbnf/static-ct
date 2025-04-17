@@ -41,11 +41,11 @@ import (
 	"github.com/transparency-dev/static-ct/internal/types/staticct"
 	"github.com/transparency-dev/static-ct/internal/x509util"
 	"github.com/transparency-dev/static-ct/storage"
-	"github.com/transparency-dev/static-ct/storage/bbolt"
 	tessera "github.com/transparency-dev/trillian-tessera"
 	"github.com/transparency-dev/trillian-tessera/api/layout"
 	"github.com/transparency-dev/trillian-tessera/ctonly"
 	posixTessera "github.com/transparency-dev/trillian-tessera/storage/posix"
+	badger_as "github.com/transparency-dev/trillian-tessera/storage/posix/antispam"
 	"golang.org/x/mod/sumdb/note"
 	"k8s.io/klog/v2"
 )
@@ -148,11 +148,21 @@ func newPOSIXStorageFunc(t *testing.T, root string) storage.CreateStorage {
 			klog.Fatalf("Failed to initialize POSIX Tessera storage driver: %v", err)
 		}
 
+		asOpts := badger_as.AntispamOpts{
+			MaxBatchSize:      5000,
+			PushbackThreshold: 1024,
+		}
+		antispam, err := badger_as.NewAntispam(ctx, path.Join(root, "dedup.db"), asOpts)
+		if err != nil {
+			klog.Exitf("Failed to create new GCP antispam storage: %v", err)
+		}
+
 		opts := tessera.NewAppendOptions().
 			WithCheckpointSigner(signer).
-			WithCTLayout()
-			// TODO(phboneff): add other options like MaxBatchSize of 1 when implementing
-			// additional tests
+			WithCTLayout().
+			WithAntispam(256, antispam)
+		// TODO(phboneff): add other options like MaxBatchSize of 1 when implementing
+		// additional tests
 
 		appender, _, _, err := tessera.NewAppender(ctx, driver, opts)
 		if err != nil {
@@ -164,12 +174,7 @@ func newPOSIXStorageFunc(t *testing.T, root string) storage.CreateStorage {
 			klog.Fatalf("failed to initialize InMemory issuer storage: %v", err)
 		}
 
-		beDedupStorage, err := bbolt.NewStorage(path.Join(root, "dedup.db"))
-		if err != nil {
-			klog.Fatalf("Failed to initialize BBolt deduplication database: %v", err)
-		}
-
-		s, err := storage.NewCTStorage(appender, issuerStorage, beDedupStorage)
+		s, err := storage.NewCTStorage(appender, issuerStorage)
 		if err != nil {
 			klog.Fatalf("Failed to initialize CTStorage: %v", err)
 		}
@@ -471,7 +476,7 @@ func TestAddChain(t *testing.T) {
 		{
 			descr:       "success-duplicate",
 			chain:       []string{testdata.CertFromIntermediate, testdata.IntermediateFromRoot, testdata.CACertPEM},
-			wantIdx:     0,
+			wantIdx:     1,
 			wantLogSize: 1,
 			want:        http.StatusOK,
 		},
