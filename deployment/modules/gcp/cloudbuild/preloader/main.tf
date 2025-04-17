@@ -112,7 +112,7 @@ resource "google_cloud_scheduler_job" "deploy_cron" {
     uri         = "https://cloudbuild.googleapis.com/v1/projects/${var.project_id}/locations/${var.location}/triggers/${google_cloudbuild_trigger.preloader_trigger.trigger_id}:run"
     body        = base64encode(jsonencode({
       source = {
-        branchName = "main"
+        branchName = "DEPLOY"
       }
     }))
     headers = {
