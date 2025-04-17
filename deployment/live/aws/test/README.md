@@ -95,7 +95,7 @@ go run ./cmd/aws \
   --db_port=3306 \
   --db_user=tesseract \
   --db_password=${TESSERACT_DB_PASSWORD} \
-  --dedup_path=test-static-ct
+  --antispam_db_name=antispam_db
 ```
 
 In a different terminal you can either mint and submit certificates manually, or
