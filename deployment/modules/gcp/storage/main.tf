@@ -37,6 +37,9 @@ resource "google_storage_bucket" "log_bucket" {
   uniform_bucket_level_access = true
 
   force_destroy = var.ephemeral
+  soft_delete_policy {
+    retention_duration_seconds = 0
+  }
 }
 
 # Spanner
